@@ -54,6 +54,8 @@ import { registerManageCvrAvatarTool } from './tools/cvrAvatarTools.js';
 import { registerInspectCvrCckTool } from './tools/cvrCckAuditTools.js';
 import { registerHowtoCckTool } from './tools/cvrHowToTools.js';
 import { registerConfigureCvrVehicleTool } from './tools/cvrVehicleTools.js';
+import { registerListEditorWindowsTool } from './tools/listEditorWindowsTool.js';
+import { registerClickUiElementTool } from './tools/clickUiElementTool.js';
 import { registerBatchExecuteTool } from './tools/batchExecuteTool.js';
 import { registerShowUnityDashboardTool } from './tools/showUnityDashboardTool.js';
 import { registerGetScenesHierarchyTool } from './tools/getScenesHierarchyTool.js';
@@ -190,6 +192,10 @@ registerManageCvrAvatarTool(server, mcpUnity, toolLogger);
 registerInspectCvrCckTool(server, mcpUnity, toolLogger);
 registerHowtoCckTool(server, mcpUnity, toolLogger);
 registerConfigureCvrVehicleTool(server, mcpUnity, toolLogger);
+
+// Register Editor UI interaction tools
+registerListEditorWindowsTool(server, mcpUnity, toolLogger);
+registerClickUiElementTool(server, mcpUnity, toolLogger);
 
 // Register Batch Execute Tool (high-priority for performance)
 registerBatchExecuteTool(server, mcpUnity, toolLogger);

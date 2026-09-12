@@ -1037,6 +1037,14 @@ FindLocalAssetsTool findLocalAssetsTool = new FindLocalAssetsTool();
             ConfigureCvrVehicleTool configureCvrVehicleTool = new ConfigureCvrVehicleTool();
             _tools.Add(configureCvrVehicleTool.Name, configureCvrVehicleTool);
 
+            // Register ListEditorWindowsTool
+            ListEditorWindowsTool listEditorWindowsTool = new ListEditorWindowsTool();
+            _tools.Add(listEditorWindowsTool.Name, listEditorWindowsTool);
+
+            // Register ClickUiElementTool
+            ClickUiElementTool clickUiElementTool = new ClickUiElementTool();
+            _tools.Add(clickUiElementTool.Name, clickUiElementTool);
+
             // Register BatchExecuteTool (must be registered last as it needs access to other tools)
             BatchExecuteTool batchExecuteTool = new BatchExecuteTool(this);
             _tools.Add(batchExecuteTool.Name, batchExecuteTool);
