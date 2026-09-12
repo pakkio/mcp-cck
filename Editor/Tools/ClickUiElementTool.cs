@@ -44,7 +44,9 @@ namespace McpUnity.Tools
                     "Provide at least one of 'elementName' or 'elementText'", "validation_error");
             }
 
-            EditorWindow[] windows = Resources.FindObjectsOfTypeAll<EditorWindow>();
+            // Fully qualified: this project's sibling McpUnity.Resources namespace shadows
+            // UnityEngine.Resources for an unqualified reference here.
+            EditorWindow[] windows = UnityEngine.Resources.FindObjectsOfTypeAll<EditorWindow>();
             EditorWindow window = windows.FirstOrDefault(w => w != null && (
                 (w.titleContent != null && w.titleContent.text.IndexOf(windowTitle, StringComparison.OrdinalIgnoreCase) >= 0) ||
                 w.GetType().Name.IndexOf(windowTitle, StringComparison.OrdinalIgnoreCase) >= 0));
