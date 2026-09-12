@@ -14,7 +14,7 @@ namespace McpUnity.Unity
     {
         // Constants
         public const string ServerVersion = "1.5.2";
-        public const string PackageName = "com.gamelovers.mcp-unity";
+        public const string PackageName = "com.pakkio.mcp-cck";
         public const int RequestTimeoutMinimum = 10;
         
         // Paths
