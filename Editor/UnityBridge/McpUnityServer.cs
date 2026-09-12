@@ -1045,6 +1045,10 @@ FindLocalAssetsTool findLocalAssetsTool = new FindLocalAssetsTool();
             ClickUiElementTool clickUiElementTool = new ClickUiElementTool();
             _tools.Add(clickUiElementTool.Name, clickUiElementTool);
 
+            // Register CvrTestModeTool
+            CvrTestModeTool cvrTestModeTool = new CvrTestModeTool();
+            _tools.Add(cvrTestModeTool.Name, cvrTestModeTool);
+
             // Register BatchExecuteTool (must be registered last as it needs access to other tools)
             BatchExecuteTool batchExecuteTool = new BatchExecuteTool(this);
             _tools.Add(batchExecuteTool.Name, batchExecuteTool);
