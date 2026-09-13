@@ -2,6 +2,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { McpUnity } from './unity/mcpUnity.js';
+import { BlenderBridge } from './unity/blenderBridge.js';
 import { Logger, LogLevel } from './utils/logger.js';
 import { registerCreateSceneTool } from './tools/createSceneTool.js';
 import { registerMenuItemTool } from './tools/menuItemTool.js';
@@ -60,6 +61,7 @@ import { registerCvrTestModeTool } from './tools/cvrTestModeTools.js';
 import { registerBatchExecuteTool } from './tools/batchExecuteTool.js';
 import { registerShowUnityDashboardTool } from './tools/showUnityDashboardTool.js';
 import { registerGetScenesHierarchyTool } from './tools/getScenesHierarchyTool.js';
+import { registerBlenderExportVehicleFbxTool, registerBlenderGetVehicleInfoTool, registerBlenderImportVehicleToUnityTool, registerPipelineBuildVehicleTool, registerPipelineBridgeStatusTool } from './tools/pipelineTools.js';
 import { registerGetMenuItemsResource } from './resources/getMenuItemResource.js';
 import { registerGetConsoleLogsResource } from './resources/getConsoleLogsResource.js';
 import { registerGetHierarchyResource } from './resources/getScenesHierarchyResource.js';
@@ -94,6 +96,10 @@ const server = new McpServer (
 
 // Initialize MCP HTTP bridge with Unity editor
 const mcpUnity = new McpUnity(unityLogger);
+
+// Initialize Blender bridge (ws://127.0.0.1:9876)
+const blenderBridge = new BlenderBridge(serverLogger);
+blenderBridge.connect().catch(err => serverLogger.warn('Could not connect to Blender yet: ' + err.message));
 
 // Register all tools into the MCP server
 registerMenuItemTool(server, mcpUnity, toolLogger);
@@ -201,6 +207,13 @@ registerCvrTestModeTool(server, mcpUnity, toolLogger);
 
 // Register Batch Execute Tool (high-priority for performance)
 registerBatchExecuteTool(server, mcpUnity, toolLogger);
+
+// Register Pipeline/Blender bridge tools (Blender ↔ Unity vehicle workflows)
+registerBlenderExportVehicleFbxTool(server, blenderBridge, toolLogger);
+registerBlenderGetVehicleInfoTool(server, blenderBridge, toolLogger);
+registerBlenderImportVehicleToUnityTool(server, toolLogger);
+registerPipelineBuildVehicleTool(server, blenderBridge, mcpUnity, toolLogger);
+registerPipelineBridgeStatusTool(server, blenderBridge, mcpUnity, toolLogger);
 
 // Register all resources into the MCP server
 registerGetTestsResource(server, mcpUnity, resourceLogger);
