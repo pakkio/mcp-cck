@@ -8,7 +8,7 @@ import { getToolTimeout } from '../utils/timeouts.js';
 
 // Constants for the tool
 const toolName = 'add_package';
-const toolDescription = 'Adds packages into the Unity Package Manager';
+const toolDescription = 'Adds packages into the Unity Package Manager. Note: installing a package triggers a Unity domain reload and a brief WebSocket disconnect/reconnect while scripts recompile (normal behavior; unsaved scene edits stay intact).';
 const paramsSchema = z.object({
   source: z.string().describe('The source to use (registry, github, or disk) to add the package'),
   packageName: z.string().optional().describe('The package name to add from Unity registry (e.g. com.unity.textmeshpro)'),

@@ -62,8 +62,13 @@ namespace McpUnity.Tools
             // Rigidbody
             Rigidbody rb = root.AddComponent<Rigidbody>();
             rb.mass = mass;
+#if UNITY_6000_0_OR_NEWER
+            rb.linearDamping = 0.05f;
+            rb.angularDamping = 0.5f;
+#else
             rb.drag = 0.05f;
             rb.angularDrag = 0.5f;
+#endif
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 

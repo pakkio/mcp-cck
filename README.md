@@ -217,11 +217,11 @@ The following tools are available for manipulating and querying Unity scenes and
 - `manage_cvr_avatar`: Manages ChilloutVR CCK Avatar components: CVRAvatar setup, automatic viewpoint/voice calculation, lip-sync visemes, blinks, and Advanced Avatar Settings (AAS)
   > **Example prompt:** "Setup a CVRAvatar on the imported humanoid model and add an AAS toggle setting for 'HatToggle'"
 
-- `inspect_cvr_cck`: Audits and validates ChilloutVR CCK content (Worlds, Avatars, Props) for upload readiness, performance budgets, and disallowed components
-  > **Example prompt:** "Validate the active scene for ChilloutVR world upload and check polygon budgets"
+- `inspect_cvr_cck`: Audits and validates ChilloutVR CCK content (Worlds, Avatars, Props) and project setup (`action='check_setup'` checks Unity version vs live CCK API, Built-In Render Pipeline, CCK installation, and folder hygiene)
+  > **Example prompt:** "Check if my Unity project setup matches ChilloutVR CCK requirements" or "Validate the active scene for ChilloutVR world upload"
 
-- `howto_cck`: Provides expert ChilloutVR CCK production recipes, best practices, and optional GameObject scaffolding (e.g. `vehicles`, `door`, `mirror`, `elevator`, `pickup`, `aas`, `video_player`, `optimization`)
-  > **Example prompt:** "howto_cck topic='vehicles' scaffold=true" or "How do I build an interactive sliding door in ChilloutVR CCK?"
+- `howto_cck`: Provides expert ChilloutVR CCK official setup instructions (`setup`, backed by live `api.chilloutvr.net/1/public/cck/info`), production recipes, best practices, and optional GameObject scaffolding (`setup`, `vehicles`, `door`, `mirror`, `elevator`, `pickup`, `aas`, `video_player`, `portals`, `optimization`)
+  > **Example prompt:** "howto_cck topic='setup'" or "howto_cck topic='vehicles' scaffold=true"
 
 - `configure_cvr_vehicle`: Creates and configures ChilloutVR CCK drivable vehicles: 4-wheel chassis rigs, WheelCollider suspension tuning, and passenger seats
   > **Example prompt:** "Create a drivable 4-wheel car rig with suspension spring 32000, headlights, driver CVRSeat, and 3 passenger seats"
@@ -290,7 +290,7 @@ MCP Unity includes native, reflection-backed support for **ChilloutVR** and the 
 📖 For a detailed walkthrough and examples, see the [ChilloutVR CCK Integration Guide](docs/chilloutvr-cck-integration.md).
 
 ## Requirements
-- Unity 2022.3 LTS (specifically **2022.3.58f1** for ChilloutVR CCK) or Unity 6+ - to [install the server](#install-server)
+- Unity 2022.3 LTS (specifically **2022.3.58f1** with **3D Built-In Render Pipeline** for ChilloutVR **CCK 4.0.1**; note that while the ChilloutVR `2026.3.0+` game client runs Unity `6.3.26f1`, CCK uploads still target the official CCK Unity version from `docs.chilloutvr.net/cck/setup/`) or Unity 6+ (for general Unity projects) - to [install the server](#install-server)
 - Node.js 18 or later - to [start the server](#start-server)
 - npm 9 or later - to [debug the server](#debug-server)
 

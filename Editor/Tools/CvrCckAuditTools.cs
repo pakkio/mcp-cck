@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEditor;
 using Newtonsoft.Json.Linq;
 using McpUnity.Unity;
@@ -10,14 +12,14 @@ using McpUnity.Utils;
 namespace McpUnity.Tools
 {
     /// <summary>
-    /// Tool for auditing, validating, and profiling ChilloutVR CCK Worlds and Avatars before upload.
+    /// Tool for auditing, validating, and profiling ChilloutVR CCK Worlds, Avatars, and project setup before upload.
     /// </summary>
     public class InspectCvrCckTool : McpToolBase
     {
         public InspectCvrCckTool()
         {
             Name = "inspect_cvr_cck";
-            Description = "Audits and validates ChilloutVR CCK content (Worlds, Avatars, Props) for upload readiness, performance budgets, and disallowed components.";
+            Description = "Audits and validates ChilloutVR CCK content (Worlds, Avatars, Props) and project setup (Unity version, Built-In Render Pipeline, CCK installation, folder hygiene) for upload readiness and performance budgets.";
             IsAsync = false;
         }
 
@@ -36,9 +38,12 @@ namespace McpUnity.Tools
                 case "get_stats":
                     return HandleGetStats(contentType, instanceId, objectPath);
 
+                case "check_setup":
+                    return HandleCheckSetup(parameters);
+
                 default:
                     return McpUnitySocketHandler.CreateErrorResponse(
-                        $"Unknown action '{action}'. Supported actions: 'validate_content', 'get_stats'",
+                        $"Unknown action '{action}'. Supported actions: 'validate_content', 'get_stats', 'check_setup'",
                         "invalid_action"
                     );
             }
@@ -207,6 +212,138 @@ namespace McpUnity.Tools
             return HandleValidateContent(contentType, instanceId, objectPath);
         }
 
+        private JObject HandleCheckSetup(JObject parameters)
+        {
+            string expectedUnityVersion = parameters["expectedUnityVersion"]?.ToObject<string>() ?? "2022.3.58f1";
+            string expectedCckVersion = parameters["expectedCckVersion"]?.ToObject<string>() ?? "4.0.1";
+            string cckInfoSource = parameters["cckInfoSource"]?.ToObject<string>() ?? "default";
+            int maxAvatarMb = parameters["maxAvatarBundleMb"]?.ToObject<int?>() ?? 200;
+            int maxSpawnableMb = parameters["maxSpawnableBundleMb"]?.ToObject<int?>() ?? 200;
+            int maxWorldMb = parameters["maxWorldBundleMb"]?.ToObject<int?>() ?? 1024;
+
+            List<string> errors = new List<string>();
+            List<string> warnings = new List<string>();
+            List<string> suggestions = new List<string>();
+
+            // 1. Unity version check
+            string currentUnityVersion = Application.unityVersion;
+            bool exactUnityMatch = string.Equals(currentUnityVersion, expectedUnityVersion, StringComparison.OrdinalIgnoreCase);
+            string currentMajorMinor = GetMajorMinor(currentUnityVersion);
+            string expectedMajorMinor = GetMajorMinor(expectedUnityVersion);
+
+            if (!exactUnityMatch)
+            {
+                if (string.Equals(currentMajorMinor, expectedMajorMinor, StringComparison.OrdinalIgnoreCase))
+                {
+                    warnings.Add($"Unity Editor is '{currentUnityVersion}', while official CCK {expectedCckVersion} recommends '{expectedUnityVersion}'.");
+                }
+                else if (currentUnityVersion.StartsWith("2021.3", StringComparison.OrdinalIgnoreCase))
+                {
+                    warnings.Add($"Unity Editor is '{currentUnityVersion}' (CCK 3 Legacy track). Official CCK 4 ({expectedCckVersion}) requires Unity '{expectedUnityVersion}'.");
+                }
+                else
+                {
+                    errors.Add($"Unsupported Unity Editor version '{currentUnityVersion}' for CCK {expectedCckVersion}. Official CCK 4 requires Unity '{expectedUnityVersion}' (note: while the ChilloutVR client runs Unity 6.3, CCK uploads still require the official CCK Unity version from https://docs.chilloutvr.net/cck/setup/).");
+                }
+            }
+
+            // 2. Render pipeline check (Built-In RP required)
+            RenderPipelineAsset currentRp = GraphicsSettings.currentRenderPipeline;
+            bool isBuiltInRp = currentRp == null;
+            string renderPipelineName = isBuiltInRp ? "Built-In Render Pipeline" : currentRp.GetType().Name;
+            if (!isBuiltInRp)
+            {
+                errors.Add($"Project uses '{renderPipelineName}'. ChilloutVR CCK requires the 3D Built-In Render Pipeline (URP and HDRP are not supported).");
+            }
+
+            // 3. Color Space check
+            ColorSpace colorSpace = PlayerSettings.colorSpace;
+            if (colorSpace != ColorSpace.Linear)
+            {
+                warnings.Add($"Project Color Space is '{colorSpace}'. Linear color space is recommended for ChilloutVR content parity.");
+            }
+
+            // 4. CCK installation & Assets/ folder hygiene check
+            string assetsDir = Application.dataPath;
+            string[] knownCckFolderNames = new[] { "ABI.CCK", "ABI.MODS", "ABI.QA", "CVR.CCK" };
+            List<string> presentFolders = new List<string>();
+            foreach (string folder in knownCckFolderNames)
+            {
+                if (Directory.Exists(Path.Combine(assetsDir, folder)))
+                {
+                    presentFolders.Add($"Assets/{folder}");
+                }
+            }
+
+            Type cck4TestModeType = FindCckType("CVR.CCKEditor.TestMode.CCKTestModeManager") ?? FindCckType("CCKTestModeManager");
+            Type cvrWorldType = FindCckType("CVRWorld");
+            Type cvrAvatarType = FindCckType("CVRAvatar");
+            Type cvrAssetInfoType = FindCckType("CVRAssetInfo");
+
+            bool cckInstalled = cck4TestModeType != null || cvrWorldType != null || cvrAvatarType != null || cvrAssetInfoType != null;
+            string cckTrack = !cckInstalled
+                ? "not_installed"
+                : (cck4TestModeType != null || presentFolders.Contains("Assets/CVR.CCK") ? "cck4" : "cck3_legacy");
+
+            if (!cckInstalled)
+            {
+                errors.Add($"ChilloutVR CCK is not installed in this project. Download CCK {expectedCckVersion} from https://docs.chilloutvr.net/cck/setup/ and import it cleanly.");
+            }
+            else if (cckTrack == "cck3_legacy")
+            {
+                warnings.Add($"Detected legacy CCK 3 installation. CCK 3 development is discontinued; migrate to CCK {expectedCckVersion} (Unity {expectedUnityVersion}) after backing up and deleting old CCK folders.");
+            }
+
+            if (presentFolders.Contains("Assets/ABI.QA"))
+            {
+                warnings.Add("Found 'Assets/ABI.QA' folder. If upgrading CCK 4, remember a clean import requires deleting Assets/ABI.CCK, Assets/ABI.MODS, Assets/ABI.QA, and Assets/CVR.CCK before importing.");
+            }
+
+            suggestions.Add($"Sign in to the CCK using your ChilloutVR username and CCK Master Key (Community Hub > Profile Settings > Access Key Management).");
+            suggestions.Add($"Official bundle size limits: Avatars <= {maxAvatarMb} MB, Spawnables <= {maxSpawnableMb} MB, Worlds <= {maxWorldMb} MB.");
+
+            string status = errors.Count > 0 ? "error" : (warnings.Count > 0 ? "warning" : "pass");
+
+            return new JObject
+            {
+                ["success"] = true,
+                ["type"] = "text",
+                ["message"] = $"CCK Setup Audit: {status.ToUpper()} ({errors.Count} errors, {warnings.Count} warnings) — Unity {currentUnityVersion} (expected {expectedUnityVersion}), {renderPipelineName}, CCK: {cckTrack}",
+                ["status"] = status,
+                ["contentType"] = "setup",
+                ["errors"] = new JArray(errors),
+                ["warnings"] = new JArray(warnings),
+                ["suggestions"] = new JArray(suggestions),
+                ["environment"] = new JObject
+                {
+                    ["unityVersion"] = currentUnityVersion,
+                    ["expectedUnityVersion"] = expectedUnityVersion,
+                    ["expectedCckVersion"] = expectedCckVersion,
+                    ["cckInfoSource"] = cckInfoSource,
+                    ["exactUnityVersionMatch"] = exactUnityMatch,
+                    ["renderPipeline"] = renderPipelineName,
+                    ["isBuiltInRenderPipeline"] = isBuiltInRp,
+                    ["colorSpace"] = colorSpace.ToString(),
+                    ["cckInstalled"] = cckInstalled,
+                    ["cckTrack"] = cckTrack,
+                    ["cckFolders"] = new JArray(presentFolders),
+                    ["contentLimitsMb"] = new JObject
+                    {
+                        ["avatar"] = maxAvatarMb,
+                        ["spawnable"] = maxSpawnableMb,
+                        ["world"] = maxWorldMb
+                    }
+                }
+            };
+        }
+
+        private static string GetMajorMinor(string unityVersion)
+        {
+            if (string.IsNullOrEmpty(unityVersion)) return string.Empty;
+            string[] parts = unityVersion.Split('.');
+            return parts.Length >= 2 ? $"{parts[0]}.{parts[1]}" : unityVersion;
+        }
+
         private static Type FindCckType(string typeName)
         {
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -215,6 +352,7 @@ namespace McpUnity.Tools
                 {
                     Type t = assembly.GetType($"ABI.CCK.Components.{typeName}")
                           ?? assembly.GetType($"ABI.CCK.Scripts.{typeName}")
+                          ?? assembly.GetType($"CVR.CCK.Components.{typeName}")
                           ?? assembly.GetType(typeName);
                     if (t != null) return t;
                 }

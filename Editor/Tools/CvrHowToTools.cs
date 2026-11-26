@@ -30,11 +30,12 @@ namespace McpUnity.Tools
     public class HowtoCckTool : McpToolBase
     {
         private readonly List<CckRecipeInfo> _recipes = new List<CckRecipeInfo>();
+        private JObject _activeParameters;
 
         public HowtoCckTool()
         {
             Name = "howto_cck";
-            Description = "Provides expert ChilloutVR CCK recipes, best practices, and optional GameObject scaffolding for vehicles, doors, elevators, mirrors, pickups, AAS, and optimization. Supports wildcard searches ('*', 'veh*', 'list').";
+            Description = "Provides expert ChilloutVR CCK recipes, setup instructions (docs.chilloutvr.net/cck/setup/), best practices, and optional GameObject scaffolding for setup, vehicles, doors, elevators, mirrors, pickups, AAS, and optimization. Supports wildcard searches ('*', 'veh*', 'list').";
             IsAsync = false;
 
             RegisterRecipes();
@@ -42,6 +43,16 @@ namespace McpUnity.Tools
 
         private void RegisterRecipes()
         {
+            _recipes.Add(new CckRecipeInfo
+            {
+                Key = "setup",
+                Title = "Unity & CCK 4 Setup, Upgrade & Publishing",
+                Description = "Official ChilloutVR CCK setup (docs.chilloutvr.net/cck/setup/): recommended Unity version, Built-In RP, clean-import upgrade folders, Master Key sign-in, publishing, and bundle limits.",
+                Aliases = new[] { "install", "installation", "cck4", "cck3", "unity_version", "upgrade", "login", "master_key", "publish", "getting_started" },
+                SupportsScaffolding = false,
+                Handler = HandleSetupTopic
+            });
+
             _recipes.Add(new CckRecipeInfo
             {
                 Key = "vehicles",
@@ -131,6 +142,26 @@ namespace McpUnity.Tools
                 SupportsScaffolding = false,
                 Handler = HandleOptimizationTopic
             });
+
+            _recipes.Add(new CckRecipeInfo
+            {
+                Key = "testing",
+                Title = "Local Testing, Test Mode & Benign CCK Build Errors",
+                Description = "Distinction between in-Editor Test Mode vs 'Test Your Content Locally' (chilloutvr://), benign Unity PlayerLoop/Build Finished Failure logs, and verifying bundles in Temp/.",
+                Aliases = new[] { "test", "test_mode", "local_test", "build_errors", "playerloop", "chilloutvr_protocol", "bundle", "troubleshooting" },
+                SupportsScaffolding = false,
+                Handler = HandleTestingTopic
+            });
+
+            _recipes.Add(new CckRecipeInfo
+            {
+                Key = "sketchfab",
+                Title = "Sketchfab & Blender -> Unity FBX Asset Workflow",
+                Description = "Avoid multi-object foliage decimation hangs, verify visual previews before import, normalize scale/base-origin pivot, embed textures, and set Cutout alpha for leaves.",
+                Aliases = new[] { "blender", "fbx", "assets", "scenery", "trees", "foliage", "textures", "import" },
+                SupportsScaffolding = false,
+                Handler = HandleSketchfabTopic
+            });
         }
 
         public override JObject Execute(JObject parameters)
@@ -167,7 +198,15 @@ namespace McpUnity.Tools
 
             // Exactly one matched recipe -> execute its handler!
             CckRecipeInfo matchedRecipe = matches[0];
-            return matchedRecipe.Handler(scaffold, objectName);
+            _activeParameters = parameters;
+            try
+            {
+                return matchedRecipe.Handler(scaffold, objectName);
+            }
+            finally
+            {
+                _activeParameters = null;
+            }
         }
 
         private List<CckRecipeInfo> FindMatchingRecipes(string query)
@@ -267,13 +306,88 @@ namespace McpUnity.Tools
         // Topic Handlers
         // ====================================================================
 
+        private JObject HandleSetupTopic(bool scaffold, string objectName)
+        {
+            string cckVersion = _activeParameters?["cckVersion"]?.ToObject<string>() ?? "4.0.1";
+            string unityVersion = _activeParameters?["unityVersion"]?.ToObject<string>() ?? "2022.3.58f1";
+            string cckDownloadUrl = _activeParameters?["cckDownloadUrl"]?.ToObject<string>() ?? "https://files.chilloutvr.net/cck/CCK_4.0.1_Release.unitypackage";
+            string unityHubUrl = _activeParameters?["unityHubInstallUrl"]?.ToObject<string>() ?? "unityhub://2022.3.58f1/ed7f6eacb62e";
+            string unityDownloadUrl = _activeParameters?["unityDownloadUrl"]?.ToObject<string>() ?? "https://unity.com/releases/editor/whats-new/2022.3.58f1#installs";
+            string infoSource = _activeParameters?["cckInfoSource"]?.ToObject<string>() ?? "default";
+            int maxAvatarMb = _activeParameters?["maxAvatarBundleMb"]?.ToObject<int?>() ?? 200;
+            int maxSpawnableMb = _activeParameters?["maxSpawnableBundleMb"]?.ToObject<int?>() ?? 200;
+            int maxWorldMb = _activeParameters?["maxWorldBundleMb"]?.ToObject<int?>() ?? 1024;
+
+            string sourceNote = infoSource == "live"
+                ? "live from https://api.chilloutvr.net/1/public/cck/info"
+                : "cached defaults (offline fallback)";
+
+            string guide = $@"### ChilloutVR Unity & CCK Setup Guide (Official docs.chilloutvr.net/cck/setup/)
+*(Version data: {sourceNote} | Current Editor: `{Application.unityVersion}`)*
+
+1. **Which CCK Version Should I Use?**
+   - **CCK 4 (Release — Recommended):** `v{cckVersion}` using **Unity `{unityVersion}`** (**3D Built-In Render Pipeline** — URP/HDRP are not supported). Modern build panel, content browser, account switcher, reworked build pipeline (no Play Mode required to upload).
+   - **CCK 3 (Legacy):** `v3.16.4` using **Unity `2021.3.45f2`**. Development discontinued; use CCK 4 for active projects.
+   - **Never mix CCK 3 and CCK 4** in the same project — they conflict. CCK 4 includes all CCK 3 functionality.
+   - **Client vs. CCK Version Note:** The ChilloutVR game client (`2026.3.0+`) runs on **Unity `6.3.26f1`** (still Built-In RP), while CCK content creation uses **Unity `{unityVersion}`** until an updated CCK is published via `https://api.chilloutvr.net/1/public/cck/info`.
+
+2. **Downloads & Unity Hub Security Notice**
+   - **CCK 4 Package:** {cckDownloadUrl}
+   - **Unity Hub Direct Install:** `{unityHubUrl}`
+   - **Unity Editor Download:** {unityDownloadUrl}
+   - **Unity Security Advisory Note:** Unity Hub may flag `{unityVersion}` under a Unity Security Update Advisory. Per ChilloutVR docs, this only affects player builds and **not** the Unity Editor, so it is safe for creating ChilloutVR content.
+
+3. **Clean Import Required on Every CCK 4 Update**
+   - **Back up your project** before updating.
+   - Delete all existing CCK folders from `Assets/` before importing the new package:
+     - `Assets/ABI.CCK`
+     - `Assets/ABI.MODS`
+     - `Assets/ABI.QA`
+     - `Assets/CVR.CCK`
+   - Import the downloaded CCK 4 `.unitypackage` (`Assets > Import Package > Custom Package...`).
+
+4. **Signing In to the CCK**
+   - Sign in with your ChilloutVR **username** and **Content Creation Kit Master Key** (*not* your account password).
+   - Retrieve your Master Key on the Community Hub (https://hub.chilloutvr.net) under **Profile Settings > Access Key Management**.
+
+5. **Publishing Content & Official Bundle Limits**
+   - After uploading, publish from the Community Hub content details page (**Submit for Publication**), reachable via:
+     - Community Hub > **My Content** > **Manage**
+     - CCK Builder Tab > top-right `▼` utility menu > **Open in Browser**
+     - CCK Browser Tab (CCK 4.x+) > **View on Hub**
+     - In-game content details page > **Open in Hub**
+   - **Official Bundle Size Limits:** Avatars <= **{maxAvatarMb} MB**, Spawnables <= **{maxSpawnableMb} MB**, Worlds <= **{maxWorldMb} MB**.
+   - Official Setup Docs: https://docs.chilloutvr.net/cck/setup/ | Discord: https://discord.gg/ChilloutVR";
+
+            return new JObject
+            {
+                ["success"] = true,
+                ["type"] = "text",
+                ["topic"] = "setup",
+                ["guide"] = guide,
+                ["message"] = guide,
+                ["cckInfo"] = new JObject
+                {
+                    ["cckVersion"] = cckVersion,
+                    ["unityVersion"] = unityVersion,
+                    ["currentUnityVersion"] = Application.unityVersion,
+                    ["cckDownloadUrl"] = cckDownloadUrl,
+                    ["unityHubInstallUrl"] = unityHubUrl,
+                    ["source"] = infoSource,
+                    ["maxAvatarBundleMb"] = maxAvatarMb,
+                    ["maxSpawnableBundleMb"] = maxSpawnableMb,
+                    ["maxWorldBundleMb"] = maxWorldMb
+                }
+            };
+        }
+
         private JObject HandleVehicleTopic(bool scaffold, string objectName)
         {
             string guide = @"### ChilloutVR CCK Vehicle Best Practices & Recipe
 
 1. **Architecture & Constraints**:
    - ChilloutVR does not permit custom C# scripts in uploaded bundles.
-   - Drivable vehicles must use Unity built-in physics (`Rigidbody`, `WheelCollider`), `CVRSeat`, `CVRInteractable`, and `CVRVariableBuffer`.
+   - Drivable vehicles use CCK 4 native vehicle components (`CVRWheelHubController`, `CVRWheelController`) alongside Unity physics (`Rigidbody`, `WheelCollider`), `CVRSeat`, `CVRInteractable`, and `CVRVariableBuffer`.
 
 2. **Chassis & Rigidbody**:
    - Vehicle Root: `Rigidbody` with mass ~1200kg, Drag 0.05, Angular Drag 0.5, Interpolate enabled.
@@ -304,8 +418,13 @@ namespace McpUnity.Tools
                 GameObject root = new GameObject(name);
                 Rigidbody rb = root.AddComponent<Rigidbody>();
                 rb.mass = 1200f;
+#if UNITY_6000_0_OR_NEWER
+                rb.linearDamping = 0.05f;
+                rb.angularDamping = 0.5f;
+#else
                 rb.drag = 0.05f;
                 rb.angularDrag = 0.5f;
+#endif
                 rb.interpolation = RigidbodyInterpolation.Interpolate;
 
                 // Body visual
@@ -633,6 +752,67 @@ namespace McpUnity.Tools
                 ["success"] = true,
                 ["type"] = "text",
                 ["topic"] = "optimization",
+                ["guide"] = guide,
+                ["message"] = guide
+            };
+        }
+
+        private JObject HandleTestingTopic(bool scaffold, string objectName)
+        {
+            string guide = @"### ChilloutVR CCK Testing, Local Builds & Benign Build Errors
+
+1. **Two Different Test Modes (Do Not Confuse Them)**:
+   - **In-Editor Test Mode (`manage_cck_test_mode`)**: Same as CCK Control Panel's 'Test in PlayMode'. Spawns a walkable player inside the Unity Editor. Does **not** require ChilloutVR installed on the machine.
+   - **Test Your Content Locally (CCK Panel)**: Builds a real `.cvrworld` / `.cvravatar` / `.cvrprop` bundle into the project's `Temp/` folder and launches the external ChilloutVR client via the `chilloutvr://` URL protocol.
+   - **Prerequisite for 'Test Your Content Locally'**: ChilloutVR must be installed via Steam and **launched at least once** so Windows registers the `chilloutvr://` protocol handler. Otherwise the build completes, restores the scene, and stops when trying to invoke `chilloutvr://`.
+
+2. **Known Benign Unity/CCK Build Errors (NOT Scene Errors)**:
+   - `PlayerLoop internal function has been called recursively`
+     - Happens because CCK invokes `BuildAssetBundles` from async code while Unity is inside its PlayerLoop.
+   - `Build Finished, Result: Failure`
+     - Logged by Unity solely because the PlayerLoop error was emitted during the build — **CCK continues and still creates the bundle cleanly**.
+   - **Do NOT waste time debugging your scene** over these two messages alone.
+
+3. **How to Verify a CCK Build Actually Succeeded**:
+   - Check the Unity project's `Temp/` folder for the generated bundle (e.g., `cvrworld_<id>_<hash>.cvrworld`, `.cvravatar`, or `.cvrprop`) and confirm a non-zero file size.
+   - Confirm in `Editor.log` that only allowed CCK/Unity components (e.g. `CVRWorld`, `CVRWheelHubController`, `CVRWheelController`, `CVRInteractable`) are bundled and no custom user C# scripts were stripped or failed.";
+
+            return new JObject
+            {
+                ["success"] = true,
+                ["type"] = "text",
+                ["topic"] = "testing",
+                ["guide"] = guide,
+                ["message"] = guide
+            };
+        }
+
+        private JObject HandleSketchfabTopic(bool scaffold, string objectName)
+        {
+            string guide = @"### Sketchfab & Blender -> Unity FBX Asset Workflow (Pitfalls to Avoid)
+
+1. **Inspect Preview, Object Count & Triangle Count BEFORE Importing**:
+   - **Always inspect the Sketchfab preview thumbnail** before downloading — asset names like 'Tree' are often leafless/dead trees.
+   - **Prefer single-mesh models (~2k–10k triangles)** for scenery/props.
+   - **NEVER run per-object decimation/simplification on multi-object foliage** (trees split into thousands of 8-vertex leaf objects will hang Blender for 10+ minutes and destroy leaves). Disable auto-decimation on already-low-poly (<10k tris) or multi-piece foliage; if decimation is genuinely needed, join meshes first.
+
+2. **Normalize in Blender BEFORE Exporting FBX**:
+   - Scale the asset to realistic world meters (raw Sketchfab assets frequently import 10x–30x too large).
+   - Move the object pivot/base to the world origin (`Z = 0` in Blender) and apply scale/rotation transforms (`Ctrl+A`).
+
+3. **Textures & Foliage Materials in Unity**:
+   - Export FBX with `path_mode='COPY'` and `embed_textures=True` (otherwise FBX arrives in Unity without textures), OR explicitly copy texture maps into `Assets/Materials/` and assign them.
+   - For leaves/hedges with alpha transparency, configure Unity Built-In `Standard` materials with **Cutout** rendering mode (`_Mode = 1`) so foliage cards render cleanly.
+   - Verify placement after `add_asset_to_scene` (it returns the final world `position`).
+
+4. **Licensing**:
+   - Track attribution credits when keeping **CC Attribution (CC-BY)** Sketchfab models in published ChilloutVR worlds.";
+
+            return new JObject
+            {
+                ["success"] = true,
+                ["type"] = "text",
+                ["topic"] = "sketchfab",
                 ["guide"] = guide,
                 ["message"] = guide
             };

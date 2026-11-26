@@ -117,9 +117,11 @@ If no valid setting is found, Node falls back to:
 - **Name mismatch**: Node `toolName`/`resourceName` must equal Unity `Name` exactly, or Unity responds `unknown_method`.
 - **Long main-thread work**: synchronous `Execute()` blocks the Unity editor; use async patterns for heavy operations.
 - **Remote connections**: Unity must bind `0.0.0.0` (`AllowRemoteConnections=true`) and Node must target the correct host (`UNITY_HOST`).
-- **Unity domain reload**: the server stops during script reloads and may restart; avoid relying on persistent in-memory state across reloads.
+- **Unity domain reload**: the server stops during script reloads (including after `add_package` installs like ProBuilder) and reconnects automatically; avoid relying on persistent in-memory state across reloads.
 - **Multiplayer Play Mode**: Clone instances automatically skip server startup; only the main editor hosts the MCP server.
 - **Schema compatibility across clients**: avoid reusing the same nested Zod object instance for multiple sibling fields (for example `position`, `rotation`, `scale`). Some MCP clients fail on local refs like `#/properties/position`; prefer creating a fresh nested schema per field.
+- **CCK local build benign errors & `chilloutvr://`**: During CCK builds, `"PlayerLoop internal function has been called recursively"` followed by `"Build Finished, Result: Failure"` are known benign Unity/CCK logs — verify the generated `.cvrworld`/`.cvravatar`/`.cvrprop` bundle in `Temp/` instead of treating them as scene failures. Use `manage_cck_test_mode` for in-Editor PlayMode testing; CCK "Test Your Content Locally" requires Steam ChilloutVR installed and launched once to register `chilloutvr://`.
+- **Sketchfab / Blender FBX workflow**: Always inspect preview thumbnails and object/triangle counts before importing; never run per-object decimation on multi-object foliage (hangs Blender); normalize scale and base-origin pivot (`Z = 0`) and export FBX with embedded/copied textures and Cutout alpha materials for leaves.
 
 ### Release/version bump checklist
 - Update versions consistently:
@@ -198,8 +200,8 @@ If no valid setting is found, Node falls back to:
 - `manage_cvr_world` — Manages ChilloutVR CCK Worlds (CVRWorld settings, spawn points, optimized mirrors, seats/chairs, portals)
 - `configure_cvr_interactivity` — Configures ChilloutVR CCK Interactivity (CVRInteractable triggers/actions, CVRPickupObject grips, CVRVariableBuffer sync)
 - `manage_cvr_avatar` — Manages ChilloutVR CCK Avatars (CVRAvatar viewpoint/voice, visemes, eye blinks, Advanced Avatar Settings AAS)
-- `inspect_cvr_cck` — Audits and validates ChilloutVR CCK content (Worlds, Avatars, Props) for upload readiness and performance budgets
-- `howto_cck` — Provides expert ChilloutVR CCK recipes, best practices, and GameObject scaffolding for vehicles, doors, elevators, mirrors, pickups, AAS, and optimization
+- `inspect_cvr_cck` — Audits and validates ChilloutVR CCK content (Worlds, Avatars, Props) and project setup (`check_setup` verifies Unity version against live CCK API, Built-In RP, Color Space, and CCK installation)
+- `howto_cck` — Provides official ChilloutVR CCK setup guide (`setup` with live `api.chilloutvr.net/1/public/cck/info` lookup), local testing/build error troubleshooting (`testing`), Sketchfab/Blender FBX workflow (`sketchfab`), expert recipes, best practices, and GameObject scaffolding for vehicles, doors, elevators, mirrors, pickups, AAS, portals, and optimization
 - `configure_cvr_vehicle` — Creates and configures ChilloutVR CCK drivable vehicles (4-wheel chassis rigs, WheelCollider suspension tuning, passenger seats)
 - `execute_batch` — Executes multiple MCP Unity operations in a single synchronous Unity frame
 

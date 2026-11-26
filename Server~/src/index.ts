@@ -83,7 +83,7 @@ const resourceLogger = new Logger('Resources', LogLevel.INFO);
 const server = new McpServer (
   {
     name: "MCP Unity Server",
-    version: "1.7.1"
+    version: "1.8.0"
   },
   {
     capabilities: {

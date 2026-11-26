@@ -101,7 +101,7 @@ namespace McpUnity.Tools
                 // makeActive: false means "create and save it, don't open it" - close the
                 // additively-loaded scene now that it's on disk, unless it's the only scene left
                 // loaded (EditorSceneManager refuses to close the last remaining open scene).
-                if (!makeActive && UnityEditor.SceneManagement.EditorSceneManager.loadedSceneCount > 1)
+                if (!makeActive && UnityEngine.SceneManagement.SceneManager.loadedSceneCount > 1)
                 {
                     UnityEditor.SceneManagement.EditorSceneManager.CloseScene(newScene, true);
                 }

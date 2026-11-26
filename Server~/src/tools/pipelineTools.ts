@@ -7,7 +7,7 @@ import * as path from 'path';
 
 export function registerBlenderExportVehicleFbxTool(server: McpServer, blender: BlenderBridge, logger: Logger) {
     const toolName = 'blender_export_vehicle_fbx';
-    server.tool(toolName, 'Export a Blender vehicle object as Unity-ready FBX (axis-corrected). Forwards to mcp-blender extension over WebSocket.', {
+    server.tool(toolName, 'Export a Blender object as Unity-ready FBX (axis-corrected). Before exporting Sketchfab/external models: inspect visual preview first, never run per-object decimation on multi-object foliage, normalize real-world scale & base-origin pivot (Z=0), and embed/copy textures. Forwards to mcp-blender extension over WebSocket.', {
         object_name: z.string().describe('Name of the Blender object to export'),
         export_path: z.string().describe('File path for the exported FBX')
     }, async (params: any) => {

@@ -6,7 +6,7 @@ import { Logger } from '../utils/logger.js';
 
 // Constants for the tool
 const toolName = 'add_asset_to_scene';
-const toolDescription = 'Adds an asset from the AssetDatabase to the Unity scene';
+const toolDescription = 'Adds an asset from the AssetDatabase to the Unity scene at the requested world position (preserved even when parentPath/parentId is set).';
 
 // Parameter schema for the tool
 const paramsSchema = z.object({

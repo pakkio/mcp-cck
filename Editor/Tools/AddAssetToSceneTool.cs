@@ -27,13 +27,7 @@ namespace McpUnity.Tools
             // Extract parameters
             string assetPath = parameters["assetPath"]?.ToObject<string>();
             string guid = parameters["guid"]?.ToObject<string>();
-            Vector3 position = parameters["position"]?.ToObject<JObject>() != null 
-                ? new Vector3(
-                    parameters["position"]["x"]?.ToObject<float>() ?? 0f,
-                    parameters["position"]["y"]?.ToObject<float>() ?? 0f,
-                    parameters["position"]["z"]?.ToObject<float>() ?? 0f
-                ) 
-                : Vector3.zero;
+            Vector3 position = ParseVector3(parameters["position"], Vector3.zero);
             
             // Optional parent game object
             string parentPath = parameters["parentPath"]?.ToObject<string>();
@@ -88,11 +82,9 @@ namespace McpUnity.Tools
             try
             {
                 instance = (GameObject)PrefabUtility.InstantiatePrefab(asset);
-                
-                // Set position
-                instance.transform.position = position;
-                
-                // Set parent if specified
+
+                // Set parent first (if specified), then apply requested world position
+                // so parent transforms never overwrite the requested placement.
                 if (!string.IsNullOrEmpty(parentPath) || parentId.HasValue)
                 {
                     GameObject parent = null;
@@ -110,13 +102,16 @@ namespace McpUnity.Tools
                     
                     if (parent != null)
                     {
-                        instance.transform.SetParent(parent.transform, false);
+                        instance.transform.SetParent(parent.transform, true);
                     }
                     else
                     {
                         McpLogger.LogWarning($"Parent object not found, asset will be created at the root of the scene");
                     }
                 }
+
+                // Set world position after parenting
+                instance.transform.position = position;
                 
                 // Select the newly created object
                 Selection.activeGameObject = instance;
@@ -131,16 +126,45 @@ namespace McpUnity.Tools
             }
             
             // Log the action
-            McpLogger.LogInfo($"Added asset '{asset.name}' to scene from path '{assetPath}'");
+            Vector3 finalPos = instance.transform.position;
+            McpLogger.LogInfo($"Added asset '{asset.name}' to scene from path '{assetPath}' at ({finalPos.x:F2}, {finalPos.y:F2}, {finalPos.z:F2})");
             
             // Create the response
             return new JObject
             {
                 ["success"] = true,
                 ["type"] = "text",
-                ["message"] = $"Successfully added asset '{asset.name}' with instance ID {UnityObjectId.GetObjectId(instance)} to the scene",
-                ["instanceId"] = UnityObjectId.GetObjectId(instance)
+                ["message"] = $"Successfully added asset '{asset.name}' with instance ID {UnityObjectId.GetObjectId(instance)} to the scene at ({finalPos.x:F2}, {finalPos.y:F2}, {finalPos.z:F2})",
+                ["instanceId"] = UnityObjectId.GetObjectId(instance),
+                ["position"] = new JObject
+                {
+                    ["x"] = finalPos.x,
+                    ["y"] = finalPos.y,
+                    ["z"] = finalPos.z
+                }
             };
+        }
+
+        private static Vector3 ParseVector3(JToken token, Vector3 fallback)
+        {
+            if (token == null) return fallback;
+            if (token is JObject obj)
+            {
+                return new Vector3(
+                    obj["x"]?.ToObject<float>() ?? fallback.x,
+                    obj["y"]?.ToObject<float>() ?? fallback.y,
+                    obj["z"]?.ToObject<float>() ?? fallback.z
+                );
+            }
+            if (token is JArray arr && arr.Count >= 3)
+            {
+                return new Vector3(
+                    arr[0]?.ToObject<float>() ?? fallback.x,
+                    arr[1]?.ToObject<float>() ?? fallback.y,
+                    arr[2]?.ToObject<float>() ?? fallback.z
+                );
+            }
+            return fallback;
         }
     }
 }

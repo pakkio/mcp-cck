@@ -13,11 +13,18 @@ ChilloutVR (by Alpha Blend Interactive) uses Unity to create worlds, avatars, an
 - **Avatars**: `CVRAvatar`, `CVRAdvancedAvatarSettings` (AAS), `CVRFaceTracking`.
 - **Physics & Locomotion**: Standard Unity `Rigidbody`, `WheelCollider`, and CCK seats.
 
-### Unity Version Requirement
+### Unity Version & Official CCK Setup (`docs.chilloutvr.net/cck/setup/`)
 > [!IMPORTANT]
-> **Official ChilloutVR CCK Unity Version**: **`Unity 2022.3.58f1`**
+> **Official ChilloutVR CCK 4 Version**: **`CCK 4.0.1`** → **`Unity 2022.3.58f1`** (**3D Built-In Render Pipeline** — URP/HDRP are not supported)
 >
-> All ChilloutVR content (Worlds, Avatars, Props) must be built with **Unity 2022.3.58f1** to ensure upload compatibility and runtime parity with the ChilloutVR game client. MCP Unity is tested and fully compatible with Unity 2022.3.58f1.
+> **Client vs. CCK Version Note**: While the ChilloutVR game client (`2026.3.0+`) runs on **Unity `6.3.26f1`** (still Built-In RP), content creation and uploading via CCK 4 still targets **`Unity 2022.3.58f1`** until an updated CCK is published. MCP Unity queries `https://api.chilloutvr.net/1/public/cck/info` dynamically (with offline fallback) in `howto_cck(topic="setup")` and `inspect_cvr_cck(action="check_setup")` so version checks stay current automatically.
+
+Key rules from `https://docs.chilloutvr.net/cck/setup/`:
+- **CCK 4 (Release) vs. CCK 3 (Legacy)**: Use **CCK 4** (`Unity 2022.3.58f1`) for all active projects. **Never import both CCK 3 and CCK 4** into the same project — they conflict.
+- **Clean Import Required on Every CCK 4 Update**: Back up your project, delete `Assets/ABI.CCK`, `Assets/ABI.MODS`, `Assets/ABI.QA`, and `Assets/CVR.CCK`, then import the new `.unitypackage`.
+- **Unity Hub Security Advisory**: Unity Hub may flag `2022.3.58f1` under a Unity Security Update Advisory. Per ChilloutVR docs, this only affects player builds and **not** the Unity Editor, so it is safe for creating ChilloutVR content.
+- **Signing In**: Use your ChilloutVR **username** and **CCK Master Key** (*not* your account password) from Community Hub (`https://hub.chilloutvr.net`) → **Profile Settings > Access Key Management**.
+- **Official Bundle Size Limits**: Avatars <= **200 MB**, Spawnables <= **200 MB**, Worlds <= **1024 MB (1 GB)**.
 
 MCP Unity provides soft-linked tools that interact natively with CCK components when installed, and provide clean fallbacks and template scaffolding if CCK is not yet imported.
 
@@ -125,39 +132,44 @@ Creates and tunes drivable 4-wheel vehicles and passenger seating.
 
 ---
 
-### 5. `inspect_cvr_cck` (Pre-Flight Validation & Audit)
-Performs automated pre-upload validation and performance audits against ChilloutVR limits:
+### 5. `inspect_cvr_cck` (Pre-Flight Validation, Setup Audit & Stats)
+Performs automated project setup checks (`check_setup`) and pre-upload content validation (`validate_content` / `get_stats`) against ChilloutVR limits:
 
-- Verifies required root components (`CVRWorld` or `CVRAvatar`).
-- Checks polygon/triangle budgets:
-  - Worlds: Recommended under 500,000–1,500,000 triangles.
-  - Avatars: Recommended under 70,000 triangles for Good rating.
-- Audits SkinnedMeshRenderer counts and material slot counts.
-- Verifies AudioSource 3D spatialization (prevents 2D audio world flooding).
-- Detects disallowed custom scripts.
-- Returns a structured `PASS`, `WARNING`, or `ERROR` report with actionable optimization advice.
+- **`check_setup`**:
+  - Compares the active Unity Editor version against the live official CCK version (`https://api.chilloutvr.net/1/public/cck/info`).
+  - Verifies **Built-In Render Pipeline** (flags URP/HDRP as errors) and checks Color Space (`Linear` recommended).
+  - Detects installed CCK track (`cck4`, `cck3_legacy`, or `not_installed`) and inspects `Assets/` CCK folders (`ABI.CCK`, `ABI.MODS`, `ABI.QA`, `CVR.CCK`).
+- **`validate_content` / `get_stats`**:
+  - Verifies required root components (`CVRWorld` or `CVRAvatar`).
+  - Checks polygon/triangle budgets:
+    - Worlds: Recommended under 500,000–1,500,000 triangles.
+    - Avatars: Recommended under 70,000 triangles for Good rating.
+  - Audits SkinnedMeshRenderer counts and material slot counts.
+  - Verifies AudioSource 3D spatialization (prevents 2D audio world flooding).
+  - Returns a structured `PASS`, `WARNING`, or `ERROR` report with actionable optimization advice.
 
 **Example:**
 ```json
 {
   "method": "inspect_cvr_cck",
   "params": {
-    "action": "validate_content",
-    "contentType": "world"
+    "action": "check_setup"
   }
 }
 ```
 
 ---
 
-### 6. `howto_cck` (Recipes & Scaffolding)
-Provides production recipes and instant GameObject hierarchy scaffolding.
+### 6. `howto_cck` (Setup Guide, Recipes & Scaffolding)
+Provides official setup instructions, production recipes, and instant GameObject hierarchy scaffolding.
 
-- Supports wildcard and topic searches (`*`, `list`, `veh*`, `door*`, `mirror*`, `opt*`).
+- Supports wildcard and topic searches (`*`, `list`, `setup`, `veh*`, `door*`, `mirror*`, `opt*`).
+- `topic: "setup"` pulls live CCK version/download/limit info from `https://api.chilloutvr.net/1/public/cck/info` (and even works if Unity is not yet connected).
 - Generates step-by-step best practices.
 - When `scaffold: true` is set, creates and wires up the ready-to-use GameObject structure directly in your Unity scene.
 
 **Supported Topics**:
+- `setup`: Official Unity & CCK 4 setup (`docs.chilloutvr.net/cck/setup/`), clean-import upgrade folders, Master Key auth, publishing, and bundle size limits.
 - `vehicles`: Drivable cars, suspension math, low center of mass, CVRSeat, steering wheel.
 - `door`: Interactive sliding/swinging doors with `Animator`, `CVRInteractable`, and multiplayer sync.
 - `mirror`: Performance-tuned `CVRMirror` modes and layer culling masks.
@@ -167,6 +179,8 @@ Provides production recipes and instant GameObject hierarchy scaffolding.
 - `video_player`: 16:9 screen quads with 3D audio attenuation.
 - `portals`: Gateway hubs and sub-world loading.
 - `optimization`: Pre-upload checklists for draw calls, lightmap baking, and probe grids.
+- `testing`: Distinction between `manage_cck_test_mode` vs "Test Your Content Locally" (`chilloutvr://`), known benign `PlayerLoop` / `Build Finished, Result: Failure` build messages, and verifying `.cvrworld` bundles in `Temp/`.
+- `sketchfab`: Sketchfab & Blender → Unity FBX workflow (preview checks, avoiding multi-object foliage decimation hangs, scale/pivot normalization, embedded textures, Cutout alpha leaves, CC-BY attribution).
 
 ---
 
@@ -178,3 +192,23 @@ When building for ChilloutVR, combine CCK tools with:
 - **`manage_lighting` & `configure_light_probe_group`**: Bake static illumination and generate automated 3D light probe grids for dynamic avatar lighting.
 - **`configure_colliders`**: Generate optimized convex mesh colliders for world floors and physics props.
 - **`configure_texture_settings`**: Optimize texture memory, max sizes, and crunch compression before upload.
+
+---
+
+## 4. Field-Tested Troubleshooting & Workflow Gotchas
+
+### Local Testing vs. In-Editor Test Mode & Benign CCK Build Errors
+- **Two test modes**:
+  - `manage_cck_test_mode` runs CCK's **in-Editor PlayMode** test (spawns a walkable player inside Unity; does **not** require ChilloutVR installed).
+  - CCK **"Test Your Content Locally"** builds a bundle in `Temp/` and launches the external ChilloutVR client via the `chilloutvr://` protocol — this requires **ChilloutVR installed via Steam and launched at least once** so Windows registers `chilloutvr://`.
+- **Known benign Unity/CCK build errors**:
+  - `"PlayerLoop internal function has been called recursively"` and `"Build Finished, Result: Failure"` occur because CCK invokes `BuildAssetBundles` from async code inside Unity's PlayerLoop. **They are NOT scene errors** — the bundle (`Temp/cvrworld_*.cvrworld`, `.cvravatar`, `.cvrprop`) is still produced cleanly. Always verify the generated file in `Temp/` instead of treating those two lines as a scene failure.
+
+### Sketchfab & Blender → Unity Asset Imports
+- **Check preview thumbnails & object counts first**: Don't pick models blindly by name (many `"Tree"` assets are leafless/dead trees) and **never run per-object decimation on multi-object foliage** (a tree made of thousands of 8-vertex leaf pieces hangs Blender for 10+ minutes and ruins the leaves). Prefer single-mesh assets (`~2k–10k` tris) without decimation, or join meshes before decimating.
+- **Normalize scale, pivot & textures before FBX export**: Scale to realistic meters, move base pivot to origin (`Z = 0`), export with `path_mode='COPY', embed_textures=True` (or copy textures into `Assets/Materials/`), and use Unity Built-In `Standard` **Cutout** mode for alpha foliage cards.
+- **CC Attribution**: Keep creator credit notes when using CC-BY Sketchfab models.
+
+### Package Installs & Asset Placement
+- **`add_package` domain reload**: Installing UPM packages (e.g. ProBuilder) triggers a Unity script recompile and a brief WebSocket drop/reconnect; this is normal and preserves unsaved scene edits.
+- **`add_asset_to_scene` world position**: Parenting now uses `worldPositionStays = true` and applies world `position` after parenting (supporting both `{x, y, z}` and `[x, y, z]`), returning the final placed coordinates.
