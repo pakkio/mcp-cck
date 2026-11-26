@@ -2,7 +2,7 @@
   "name": "com.pakkio.mcp-cck",
   "displayName": "MCP Unity Server",
   "author": "pakkio",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "mcpname": "io.github.pakkio/mcp-cck",
   "unity": "2022.3",
   "license": "MIT",

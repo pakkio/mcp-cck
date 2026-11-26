@@ -220,8 +220,11 @@ The following tools are available for manipulating and querying Unity scenes and
 - `inspect_cvr_cck`: Audits and validates ChilloutVR CCK content (Worlds, Avatars, Props) and project setup (`action='check_setup'` checks Unity version vs live CCK API, Built-In Render Pipeline, CCK installation, and folder hygiene)
   > **Example prompt:** "Check if my Unity project setup matches ChilloutVR CCK requirements" or "Validate the active scene for ChilloutVR world upload"
 
-- `howto_cck`: Provides expert ChilloutVR CCK official setup instructions (`setup`, backed by live `api.chilloutvr.net/1/public/cck/info`), production recipes, best practices, and optional GameObject scaffolding (`setup`, `vehicles`, `door`, `mirror`, `elevator`, `pickup`, `aas`, `video_player`, `portals`, `optimization`)
+- `howto_cck`: Provides expert ChilloutVR CCK official setup instructions (`setup`, backed by live `api.chilloutvr.net/1/public/cck/info`), production recipes, best practices, and optional GameObject scaffolding (`setup`, `testing`, `sketchfab`, `vehicles`, `door`, `mirror`, `elevator`, `pickup`, `aas`, `video_player`, `portals`, `optimization`)
   > **Example prompt:** "howto_cck topic='setup'" or "howto_cck topic='vehicles' scaffold=true"
+
+- `get_mcp_docs`: Lists, reads (with pagination and HTML text extraction), and searches all documentation and best-practice guides bundled in this MCP package (`INSTALL.md`, `AGENTS.md`, `README.md`, `docs/*`) — works even when Unity is not connected
+  > **Example prompt:** "get_mcp_docs action='list'" or "get_mcp_docs action='search' query='PlayerLoop'"
 
 - `configure_cvr_vehicle`: Creates and configures ChilloutVR CCK drivable vehicles: 4-wheel chassis rigs, WheelCollider suspension tuning, and passenger seats
   > **Example prompt:** "Create a drivable 4-wheel car rig with suspension spring 32000, headlights, driver CVRSeat, and 3 passenger seats"

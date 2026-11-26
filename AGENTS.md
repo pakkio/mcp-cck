@@ -202,6 +202,7 @@ If no valid setting is found, Node falls back to:
 - `manage_cvr_avatar` — Manages ChilloutVR CCK Avatars (CVRAvatar viewpoint/voice, visemes, eye blinks, Advanced Avatar Settings AAS)
 - `inspect_cvr_cck` — Audits and validates ChilloutVR CCK content (Worlds, Avatars, Props) and project setup (`check_setup` verifies Unity version against live CCK API, Built-In RP, Color Space, and CCK installation)
 - `howto_cck` — Provides official ChilloutVR CCK setup guide (`setup` with live `api.chilloutvr.net/1/public/cck/info` lookup), local testing/build error troubleshooting (`testing`), Sketchfab/Blender FBX workflow (`sketchfab`), expert recipes, best practices, and GameObject scaffolding for vehicles, doors, elevators, mirrors, pickups, AAS, portals, and optimization
+- `get_mcp_docs` — Lists, reads (with pagination & HTML-to-text conversion), and searches all bundled MCP documentation files (`INSTALL.md`, `AGENTS.md`, `README.md`, `docs/*`) directly from the Node server without needing Unity connected
 - `configure_cvr_vehicle` — Creates and configures ChilloutVR CCK drivable vehicles (4-wheel chassis rigs, WheelCollider suspension tuning, passenger seats)
 - `execute_batch` — Executes multiple MCP Unity operations in a single synchronous Unity frame
 

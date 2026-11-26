@@ -60,6 +60,7 @@ import { registerClickUiElementTool } from './tools/clickUiElementTool.js';
 import { registerCvrTestModeTool } from './tools/cvrTestModeTools.js';
 import { registerBatchExecuteTool } from './tools/batchExecuteTool.js';
 import { registerShowUnityDashboardTool } from './tools/showUnityDashboardTool.js';
+import { registerGetMcpDocsTool } from './tools/mcpDocsTool.js';
 import { registerGetScenesHierarchyTool } from './tools/getScenesHierarchyTool.js';
 import { registerBlenderExportVehicleFbxTool, registerBlenderGetVehicleInfoTool, registerBlenderImportVehicleToUnityTool, registerPipelineBuildVehicleTool, registerPipelineBridgeStatusTool } from './tools/pipelineTools.js';
 import { registerGetMenuItemsResource } from './resources/getMenuItemResource.js';
@@ -83,7 +84,7 @@ const resourceLogger = new Logger('Resources', LogLevel.INFO);
 const server = new McpServer (
   {
     name: "MCP Unity Server",
-    version: "1.8.0"
+    version: "1.8.1"
   },
   {
     capabilities: {
@@ -122,6 +123,7 @@ registerGetEditorStateTool(server, mcpUnity, toolLogger);
 registerGetPlayModeStatusTool(server, mcpUnity, toolLogger);
 registerSetPlayModeStatusTool(server, mcpUnity, toolLogger);
 registerShowUnityDashboardTool(server, toolLogger);
+registerGetMcpDocsTool(server, toolLogger);
 registerGetScenesHierarchyTool(server, mcpUnity, toolLogger);
 registerUnloadSceneTool(server, mcpUnity, toolLogger);
 registerRecompileScriptsTool(server, mcpUnity, toolLogger);

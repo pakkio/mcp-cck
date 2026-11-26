@@ -22,14 +22,14 @@ MCP CCK connects AI assistants (Claude Code, Cursor, Windsurf, VS Code / GitHub 
    ```text
    https://github.com/pakkio/mcp-cck.git
    ```
-   *(Or pin to a specific release tag: `https://github.com/pakkio/mcp-cck.git#v1.8.0`)*
+   *(Or pin to a specific release tag: `https://github.com/pakkio/mcp-cck.git#v1.8.1`)*
 5. Click **Add** and wait for Unity to import and compile.
 
 ---
 
-## Option B — Install from Release `.zip` (`mcp-cck-v1.8.0.zip`)
+## Option B — Install from Release `.zip` (`mcp-cck-v1.8.1.zip`)
 
-1. Download **`mcp-cck-v1.8.0.zip`** from the [GitHub Releases page](https://github.com/pakkio/mcp-cck/releases/latest).
+1. Download **`mcp-cck-v1.8.1.zip`** from the [GitHub Releases page](https://github.com/pakkio/mcp-cck/releases/latest).
 2. Extract the archive so you have the `com.pakkio.mcp-cck` folder (either outside your project or directly inside your Unity project's `Packages/` folder).
 3. Install Node dependencies for the MCP server (one time):
    ```bash
@@ -71,5 +71,6 @@ Add the server entry to your client's MCP config (e.g. `.mcp.json`, `.vscode/mcp
 ## Verify Setup
 
 Once connected, ask your AI assistant:
+- `get_mcp_docs(action="list")` / `get_mcp_docs(action="search", query="Sketchfab")` — lists, reads, and searches all bundled documentation & best-practice guides (works even without Unity open).
 - `howto_cck(topic="setup")` — shows the live official ChilloutVR CCK & Unity version from `api.chilloutvr.net`.
 - `inspect_cvr_cck(action="check_setup")` — audits your Unity version, Built-In Render Pipeline, Color Space, and CCK installation.
