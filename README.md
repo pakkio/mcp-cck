@@ -341,11 +341,20 @@ Installing this MCP Unity Server is a multi-step process:
 </details>
 
 ### Step 2: Install Unity MCP Server package via Unity Package Manager
-1. Open the Unity Package Manager (Window > Package Manager)
-2. Click the "+" button in the top-left corner
-3. Select "Add package from git URL..."
-4. Enter: `https://github.com/pakkio/mcp-unity.git`
-5. Click "Add"
+
+**Option A — From Git URL (Recommended):**
+1. Open the Unity Package Manager (**Window > Package Manager**)
+2. Click the **`+`** button in the top-left corner
+3. Select **"Add package from git URL..."**
+4. Enter: `https://github.com/pakkio/mcp-cck.git` (or pin a tag like `https://github.com/pakkio/mcp-cck.git#v1.8.0`)
+5. Click **Add**
+
+**Option B — From Release `.zip`:**
+1. Download `mcp-cck-v<version>.zip` from the [GitHub Releases](https://github.com/pakkio/mcp-cck/releases/latest) page and extract `com.pakkio.mcp-cck/`.
+2. Install Node runtime dependencies once: `cd com.pakkio.mcp-cck/Server~ && npm install --omit=dev` (compiled `Server~/build/index.js` is prebuilt in the zip).
+3. In Unity Package Manager, click **`+`** → **"Add package from disk..."** → select `com.pakkio.mcp-cck/package.json` (or drop the folder directly into `<YourUnityProject>/Packages/`).
+
+For full step-by-step instructions, see [INSTALL.md](INSTALL.md).
 
 ![package manager](https://github.com/user-attachments/assets/a72bfca4-ae52-48e7-a876-e99c701b0497)
 
@@ -407,7 +416,7 @@ For workspace-scoped VS Code / GitHub Copilot (`.vscode/mcp.json`), use `${works
        "mcp-unity": {
           "command": "node",
           "args": [
-             "${workspaceFolder}/Library/PackageCache/com.gamelovers.mcp-unity@<hash>/Server~/build/index.js"
+             "${workspaceFolder}/Library/PackageCache/com.pakkio.mcp-cck@<hash>/Server~/build/index.js"
           ]
        }
    }
